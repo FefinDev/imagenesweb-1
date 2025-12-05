@@ -1,124 +1,98 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Galería Automática del Repo</title>
-<script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Galería Auto-Detectada</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #121212;
+            margin: 0;
+            padding: 20px;
+            color: white;
+        }
 
-<style>
-/* Animación suave */
-.fade {
-  opacity: 0;
-  transform: translateY(20px);
-  animation: fadeIn .6s forwards;
-}
-@keyframes fadeIn {
-  to { opacity: 1; transform: translateY(0); }
-}
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
 
-/* Fondo con gradiente */
-body {
-  background: radial-gradient(circle at top, #1a1a1a, #000);
-}
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+        }
 
-/* Lightbox */
-#lightbox {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.75);
-  display: none;
-  justify-content: center;
-  align-items: center;
-  z-index: 50;
-}
-#lightbox img {
-  max-width: 90%;
-  max-height: 90%;
-  border-radius: 15px;
-  box-shadow: 0 0 25px rgba(0,0,0,0.5);
-}
-</style>
+        .card {
+            background: #1e1e1e;
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+            transition: transform 0.2s;
+        }
+
+        .card:hover {
+            transform: scale(1.05);
+        }
+
+        img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 10px;
+        }
+
+        a {
+            color: #58a6ff;
+            text-decoration: none;
+        }
+    </style>
 </head>
+<body>
 
-<body class="text-white p-6">
+<h1>Galería de Imágenes</h1>
 
-<h1 class="text-4xl font-extrabold mb-4 text-center drop-shadow-lg">
-    ✨ Imagenes online✨
-</h1>
-
-<p class="text-center opacity-70 mb-8">
-    Las imágenes se cargan directamente desde tu repositorio de GitHub.
-</p>
-
-<!-- Galería -->
-<div id="contenedor" class="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 p-4"></div>
-
-<!-- Lightbox -->
-<div id="lightbox" onclick="cerrarLightbox()">
-    <img id="lightbox-img" src="">
-</div>
+<div class="grid" id="gallery"></div>
 
 <script>
-// CONFIGURAR ESTO 👇
-const usuario = "FefinDev";   // <- CAMBIA
-const repo = "imagenesweb-1";         // <- CAMBIA
-const carpeta = "imagenes";
+    const repoOwner = "FefinDev";
+    const repoName = "imagenesweb-1";
+    const folder = "imagenes";
 
-const apiURL = `https://api.github.com/repos/${usuario}/${repo}/contents/${carpeta}`;
+    const apiURL = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${folder}`;
 
-async function cargarImagenes() {
-    const res = await fetch(apiURL);
-    const archivos = await res.json();
-    const cont = document.getElementById("contenedor");
+    async function loadImages() {
+        try {
+            const response = await fetch(apiURL);
+            const data = await response.json();
 
-    archivos
-    .filter(f => f.type === "file" && f.name.match(/\.(png|jpg|jpeg|webp|gif)$/i))
-    .forEach(f => {
-        const url = f.download_url;
+            const gallery = document.getElementById("gallery");
 
-        // Card estilo glassmorphism
-        const card = document.createElement("div");
-        card.className = `
-            fade backdrop-blur-lg bg-white/10 border border-white/10
-            p-4 rounded-2xl shadow-xl hover:scale-[1.03] transition
-            hover:bg-white/20 cursor-pointer
-        `;
+            data.forEach(file => {
+                if (file.type === "file" && /\.(png|jpg|jpeg|gif|webp|svg)$/i.test(file.name)) {
+                    // URL RAW (sirve para usar la imagen online)
+                    const rawURL = file.download_url;
 
-        card.innerHTML = `
-            <img loading="lazy" src="${url}"
-                 onclick="abrirLightbox('${url}')"
-                 class="w-full h-56 object-cover rounded-xl shadow-lg mb-4"/>
+                    const card = document.createElement("div");
+                    card.className = "card";
 
-            <p class="text-xs text-green-300 break-all mb-4">${url}</p>
+                    card.innerHTML = `
+                        <img src="${rawURL}" alt="${file.name}">
+                        <p>${file.name}</p>
+                        <a target="_blank" href="${rawURL}">Abrir imagen</a>
+                    `;
 
-            <button class="
-                w-full px-4 py-2 rounded-xl bg-green-600 hover:bg-green-700
-                text-sm font-semibold transition shadow-md
-            " onclick="copiar('${url}')">
-                Copiar URL
-            </button>
-        `;
+                    gallery.appendChild(card);
+                }
+            });
 
-        cont.appendChild(card);
-    });
-}
+        } catch (error) {
+            console.error("Error cargando imágenes:", error);
+        }
+    }
 
-function copiar(texto) {
-    navigator.clipboard.writeText(texto);
-    alert("URL copiada ✔");
-}
-
-/* Lightbox */
-function abrirLightbox(src) {
-    document.getElementById("lightbox-img").src = src;
-    document.getElementById("lightbox").style.display = "flex";
-}
-function cerrarLightbox() {
-    document.getElementById("lightbox").style.display = "none";
-}
-
-cargarImagenes();
+    loadImages();
 </script>
 
 </body>
