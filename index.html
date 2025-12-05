@@ -1,1 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Galería Automática del Repo</title>
+<script src="https://cdn.tailwindcss.com"></script>
 
+<style>
+/* Animación suave */
+.fade {
+  opacity: 0;
+  transform: translateY(20px);
+  animation: fadeIn .6s forwards;
+}
+@keyframes fadeIn {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Fondo con gradiente */
+body {
+  background: radial-gradient(circle at top, #1a1a1a, #000);
+}
+
+/* Lightbox */
+#lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 50;
+}
+#lightbox img {
+  max-width: 90%;
+  max-height: 90%;
+  border-radius: 15px;
+  box-shadow: 0 0 25px rgba(0,0,0,0.5);
+}
+</style>
+</head>
+
+<body class="text-white p-6">
+
+<h1 class="text-4xl font-extrabold mb-4 text-center drop-shadow-lg">
+    ✨ Imagenes online✨
+</h1>
+
+<p class="text-center opacity-70 mb-8">
+    Las imágenes se cargan directamente desde tu repositorio de GitHub.
+</p>
+
+<!-- Galería -->
+<div id="contenedor" class="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 p-4"></div>
+
+<!-- Lightbox -->
+<div id="lightbox" onclick="cerrarLightbox()">
+    <img id="lightbox-img" src="">
+</div>
+
+<script>
+// CONFIGURAR ESTO 👇
+const usuario = "TU_USUARIO";   // <- CAMBIA
+const repo = "TU_REPO";         // <- CAMBIA
+const carpeta = "imagenes";
+
+const apiURL = `https://api.github.com/repos/${usuario}/${repo}/contents/${carpeta}`;
+
+async function cargarImagenes() {
+    const res = await fetch(apiURL);
+    const archivos = await res.json();
+    const cont = document.getElementById("contenedor");
+
+    archivos
+    .filter(f => f.type === "file" && f.name.match(/\.(png|jpg|jpeg|webp|gif)$/i))
+    .forEach(f => {
+        const url = f.download_url;
+
+        // Card estilo glassmorphism
+        const card = document.createElement("div");
+        card.className = `
+            fade backdrop-blur-lg bg-white/10 border border-white/10
+            p-4 rounded-2xl shadow-xl hover:scale-[1.03] transition
+            hover:bg-white/20 cursor-pointer
+        `;
+
+        card.innerHTML = `
+            <img loading="lazy" src="${url}"
+                 onclick="abrirLightbox('${url}')"
+                 class="w-full h-56 object-cover rounded-xl shadow-lg mb-4"/>
+
+            <p class="text-xs text-green-300 break-all mb-4">${url}</p>
+
+            <button class="
+                w-full px-4 py-2 rounded-xl bg-green-600 hover:bg-green-700
+                text-sm font-semibold transition shadow-md
+            " onclick="copiar('${url}')">
+                Copiar URL
+            </button>
+        `;
+
+        cont.appendChild(card);
+    });
+}
+
+function copiar(texto) {
+    navigator.clipboard.writeText(texto);
+    alert("URL copiada ✔");
+}
+
+/* Lightbox */
+function abrirLightbox(src) {
+    document.getElementById("lightbox-img").src = src;
+    document.getElementById("lightbox").style.display = "flex";
+}
+function cerrarLightbox() {
+    document.getElementById("lightbox").style.display = "none";
+}
+
+cargarImagenes();
+</script>
+
+</body>
+</html>
